@@ -1,0 +1,148 @@
+defaults:
+  - models: codet5p_220m
+
+experiment_name: ""
+seed: 17
+final_experiments: True
+profile: False
+run_dir: ${hydra:run.dir}
+concept_arc: False
+combined_concept_and_eval: False
+
+baseline:
+  n_samples: 1_000_000
+  save_chunk_size: 9_600
+  log_chunk_size: 9_600
+  validation_set: False
+  test_set: True
+  parallel: False
+  max_save_chunk: 1_000_000
+  save_search_tasks: True
+  save_train_tasks: False
+  calculate_performance: True
+  tasks_file: ''
+  resume: False
+  only_one_search_task: True
+  max_state_size: 1000
+  max_chunk: 10_000_000
+  n_processes: null
+  sig_alarm: False
+  depth_one: True
+  ignore_chunk: null
+  run_mutated: True
+  load_inferrer: True
+
+ablation:
+  used: False
+  tasks_file: "outputs/evaluate_mutations/mutated_tasks_search"
+  mutation_interval: 9_600
+  start_value: 38_400
+  final_value: 979_200
+  sampling_and_filtering: False
+
+replay_buffer: 
+  capacity: 10_000_000
+  reduce_percentage: 0.5 
+  time_penalty: 0
+  length_penalty: 0
+  performance_penalty: 1
+  distance_penalty: 0
+  length_normalizer: 100
+  age_normalizer: 100
+  num_policy_experiences: 90_000
+  num_mutated_experiences: 10_000
+  mutated_train_tasks_file: './data/mutated_tasks_train_'
+  max_mutated_train_tasks: 19_200
+  mutated_file_start: 9_600
+  mutated_file_end: 19_200
+  mutated_file_interval: 9_600
+  priority_in_mutated: True
+
+exit:
+  solutions_interval: 1
+  sig_alarm: 0.5 # time allowed before execution times out
+  n_iters: 99 # number of meta-iterations
+  policy_sample_log: ${hydra:run.dir}
+  solutions_dir: ${hydra:run.dir}
+  add_policy_samples: True # whether to add policy samples to replay buffer - set False for baselines
+  max_state_size: 1_000
+  n_policy_samples: 24
+
+trainer:  
+  max_epochs: 1
+  max_steps: -1 
+  accelerator: gpu
+  devices: 1
+  precision: '16-mixed'
+  check_val_every_n_epoch: 1 
+  log_every_n_steps: 1 
+  accumulate_grad_batches: ${models.trainer.accumulate_grad_batches}
+  reload_dataloaders_every_n_epochs: 0
+  enable_progress_bar: True
+  profiler: simple
+  num_sanity_val_steps: -1
+  fast_dev_run: False # lower all batches to 1
+
+data:
+  dataloader:
+    batch_size: ${models.data.dataloader.batch_size}
+    num_workers: 0 
+    tokenizer:
+      pad_token_id: ${models.data.dataloader.tokenizer.pad_token_id}
+      eos_token_id: ${models.data.dataloader.tokenizer.eos_token_id}
+      name: ${model.name} 
+      cls: ${models.data.dataloader.tokenizer.cls} 
+      n_examples: 10
+      input_state_max: 512
+      allowed_tokens: True # ends generation early using  logits processor on allowed tokens
+      sparse: True
+  n_train: 400
+  n_val: 400
+  n_test: 400
+  train_split: 0.8
+  training_data_dir: './data/training/'
+  evaluation_data_dir: './data/evaluation/'
+  raw_training_data_dir: './data/raw/training/'
+  raw_evaluation_data_dir: './data/raw/evaluation/'
+  
+  split_keys_path: './data/split_keys.json'
+  data_dir: './data/'
+
+generator:
+  sig_alarm: 0.1
+  phi_program: 1.0
+  phi_var: 0.5
+  phi_func: 0.25
+  phi_arg: 0.5
+
+model:
+  max_length: 512
+  cache_dir: ${hydra:run.dir}
+  reduce_size: 0
+  decoder_start_token_id: 0
+  models_dir: ${hydra:run.dir}
+  name: ${models.model.name}
+  cls: ${models.model.cls}
+  type: ${models.model.type}
+  resume_path: ${hydra:run.dir}/last.ckpt.dir
+  debug: False
+  random_weights: False
+  save_top_k: 0
+  save_last: True
+
+optimization:
+  optimizer:
+    type: torch.optim.AdamW
+    kwargs:
+      lr: 5e-5
+  scheduler:
+    cls: None
+    kwargs: None
+
+evaluation:
+  temperature: 0.95
+  max_length: 512
+  batch_size_sample: 4
+  mini_batch_size_sample: 1
+  valid_grid_function: 'slow'
+  results_dir: ${hydra:run.dir}

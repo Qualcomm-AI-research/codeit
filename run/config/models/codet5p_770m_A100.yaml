@@ -1,0 +1,14 @@
+model:
+  name: 'Salesforce/codet5p-770m'
+  cls: 'transformers.T5ForConditionalGeneration'
+  type: 'seq2seq'
+data:
+  dataloader:
+    tokenizer:
+      cls: 'transformers.AutoTokenizer'
+      pad_token_id: 0
+      eos_token_id: 2
+      abr: codet5p-770m
+    batch_size: 4
+trainer:
+  accumulate_grad_batches: 128
